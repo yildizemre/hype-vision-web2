@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+html { background: #050607; }
+body { background: #050607; color: #F5F7FA; font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+::selection { background: #29A8FF; color: #000; }
+@keyframes drop { 0% { transform: translateY(-100%) } 100% { transform: translateY(200%) } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+@keyframes flicker { 0% { opacity: .75; transform: scale(1) } 100% { opacity: 1; transform: scale(1.04) } }
+@keyframes smoke { 0% { transform: translate(0, 20%) scale(.8); opacity: 0 } 20% { opacity: .9 } 100% { transform: translate(-30%, -140%) scale(1.8); opacity: 0 } }
+@keyframes beam { 0% { top: 15% } 100% { top: 95% } }
+@keyframes dash { to { stroke-dashoffset: -20 } }
