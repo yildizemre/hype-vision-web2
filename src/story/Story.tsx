@@ -8,6 +8,18 @@ const P = createContext<MotionValue<number>>(null!)
 const useP = () => useContext(P)
 const CAM_SCENES = SCENES.filter((s) => s.cam)
 
+function useIsMobile() {
+  const q = '(max-width: 767px)'
+  const [m, setM] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(q)
+    const on = () => setM(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return m
+}
+
 export default function Story() {
   const track = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: track, offset: ['start start', 'end end'] })
@@ -17,10 +29,11 @@ export default function Story() {
   }, [p])
 
   // final: the plant shrinks into the platform's live tile
+  const mobile = useIsMobile()
   const k = useTransform(p, FINAL, [0, 1], { clamp: true })
-  const stageScale = useTransform(k, [0, 1], [1, 0.58])
-  const stageX = useTransform(k, [0, 1], ['0vw', '19vw'])
-  const stageY = useTransform(k, [0, 1], ['0vh', '3vh'])
+  const stageScale = useTransform(k, [0, 1], [1, mobile ? 0.46 : 0.58])
+  const stageX = useTransform(k, [0, 1], ['0vw', mobile ? '0vw' : '19vw'])
+  const stageY = useTransform(k, [0, 1], ['0vh', mobile ? '27vh' : '3vh'])
   const radius = useTransform(k, [0, 1], [0, 14])
   const chromeOpacity = useTransform(k, [0.3, 1], [0, 1])
   const chromeEvents = useTransform(k, (v) => (v > 0.6 ? 'auto' : 'none'))
@@ -75,7 +88,7 @@ function SceneLayer({ s }: { s: Scene }) {
   return (
     <motion.div style={{ opacity, visibility }} className="absolute inset-0">
       <motion.div style={{ scale, filter, x: drift, transformOrigin: `${s.focus[0]}% ${s.focus[1]}%` }} className="absolute inset-0">
-        <Cover>
+        <Cover fx={s.focus[0]}>
           <img src={s.img} alt="" className="absolute inset-0 h-full w-full" style={{ filter: imgFilter }} fetchPriority={first ? 'high' : 'auto'} />
           {s.after && <motion.img src={s.after} alt="" style={{ opacity: afterOpacity, filter: imgFilter }} className="absolute inset-0 h-full w-full" />}
           <SceneOverlays id={s.id} />
@@ -111,9 +124,15 @@ function SwitchFx({ s }: { s: Scene }) {
 }
 
 /** Box with the image's aspect ratio that always covers the viewport. */
-function Cover({ children }: { children: ReactNode }) {
+function Cover({ fx = 50, children }: { fx?: number; children: ReactNode }) {
+  // On portrait screens the image is much wider than the viewport: centre it on the
+  // scene's focus point instead of the middle, clamped so no empty edge shows.
+  const w = `max(100vw, ${RATIO * 100}svh)`
   return (
-    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ aspectRatio: RATIO, width: `max(100vw, ${RATIO * 100}svh)` }}>
+    <div
+      className="absolute top-1/2 -translate-y-1/2"
+      style={{ aspectRatio: RATIO, width: w, left: `clamp(calc(100vw - ${w}), calc(50vw - ${w} * ${fx / 100}), 0px)` }}
+    >
       {children}
     </div>
   )
